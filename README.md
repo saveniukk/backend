@@ -95,6 +95,6 @@ docker compose down
 The project is automatically deployed to **Render.com** whenever a new commit is pushed to the `main` branch
 
 **Deployed project link:**  
-[]()
+[https://backend-0pnu.onrender.com/healthcheck](https://backend-0pnu.onrender.com/healthcheck)
 
 ---
