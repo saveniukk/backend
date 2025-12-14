@@ -7,5 +7,5 @@ export class AppService {
       status: 'ok',
       date: new Date().toISOString(),
     };
-  };
-};
+  }
+}
