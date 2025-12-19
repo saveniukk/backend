@@ -9,6 +9,8 @@ datasource db {
 model User {
   id         String    @id @default(uuid())
   username   String    @unique
+  email      String    @unique
+  password   String
   balance    Decimal   @default(0) @db.Decimal(10, 2)
   created_at DateTime  @default(now())
   records    Record[]

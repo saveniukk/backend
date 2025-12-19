@@ -12,12 +12,17 @@ export class RecordsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createRecordDto: CreateRecordDto): Promise<Record> {
+    if (!createRecordDto.user_id) {
+      throw new BadRequestException('User ID is required');
+    }
+
+    const userId = createRecordDto.user_id;
     const user = await this.prisma.user.findUnique({
-      where: { id: createRecordDto.user_id },
+      where: { id: userId },
     });
     if (!user) {
       throw new NotFoundException(
-        `User with ID ${createRecordDto.user_id} not found`,
+        `User with ID ${userId} not found`,
       );
     }
 
@@ -46,7 +51,7 @@ export class RecordsService {
       // Create the record
       const record = await tx.record.create({
         data: {
-          user_id: createRecordDto.user_id,
+          user_id: userId,
           category_id: createRecordDto.category_id,
           sum: createRecordDto.sum,
         },
@@ -55,7 +60,7 @@ export class RecordsService {
       // Update user balance
       const updatedBalance = currentBalance - expenseAmount;
       await tx.user.update({
-        where: { id: createRecordDto.user_id },
+        where: { id: userId },
         data: {
           balance: updatedBalance,
         },
@@ -78,12 +83,6 @@ export class RecordsService {
   }
 
   async findAll(userId?: string, categoryId?: string): Promise<Record[]> {
-    if (!userId && !categoryId) {
-      throw new BadRequestException(
-        'At least one filter parameter (user_id or category_id) is required',
-      );
-    }
-
     const where: Prisma.RecordWhereInput = {};
     if (userId) {
       where.user_id = userId;

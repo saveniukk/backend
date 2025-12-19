@@ -4,13 +4,14 @@ import {
   IsUUID,
   IsNumber,
   IsPositive,
+  IsOptional,
 } from 'class-validator';
 
 export class CreateRecordDto {
   @IsString()
-  @IsNotEmpty({ message: 'User ID is required' })
+  @IsOptional()
   @IsUUID(4, { message: 'User ID must be a valid UUID' })
-  user_id: string;
+  user_id?: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Category ID is required' })

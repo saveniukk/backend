@@ -4,13 +4,14 @@ import {
   IsUUID,
   IsNumber,
   IsPositive,
+  IsOptional,
 } from 'class-validator';
 
 export class CreateIncomeDto {
   @IsString()
-  @IsNotEmpty({ message: 'User ID is required' })
+  @IsOptional()
   @IsUUID(4, { message: 'User ID must be a valid UUID' })
-  user_id: string;
+  user_id?: string;
 
   @IsNumber({}, { message: 'Amount must be a number' })
   @IsPositive({ message: 'Amount must be a positive number' })

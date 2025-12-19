@@ -6,10 +6,12 @@ import { UsersModule } from './users/users.module';
 import { CategoriesModule } from './categories/categories.module';
 import { RecordsModule } from './records/records.module';
 import { IncomeModule } from './income/income.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
     PrismaModule,
+    AuthModule,
     UsersModule,
     CategoriesModule,
     RecordsModule,

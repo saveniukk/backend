@@ -2,15 +2,22 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
+    // Legacy endpoint - generate default email and password
+    const defaultEmail = `${createUserDto.username}@legacy.local`;
+    const defaultPassword = await bcrypt.hash('changeme', 10);
+
     return this.prisma.user.create({
       data: {
         username: createUserDto.username,
+        email: defaultEmail,
+        password: defaultPassword,
       },
     });
   }
