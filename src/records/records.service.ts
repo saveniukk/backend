@@ -27,7 +27,7 @@ export class RecordsService {
       id,
       userId: createRecordDto.user_id,
       categoryId: createRecordDto.category_id,
-      amount: createRecordDto.amount,
+      amount: createRecordDto.sum,
       timestamp: new Date().toISOString(),
     };
 
