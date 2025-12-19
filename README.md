@@ -1,206 +1,140 @@
-# Laboratory Work №3
+# Wallet Management System API
 
-This repository is the result of completing the third laboratory work for the course **"Server-Side Software Technologies"**
+A RESTful API for managing personal finances, built with NestJS. This application provides a comprehensive wallet system that allows users to track their income, expenses, and manage financial records with categories.
 
-The purpose of this work was to implement a REST API with CRUD operations for managing users, categories, and records using **Nest.js**. The API includes proper error handling, data validation, and relationships between entities.
+## Overview
 
----
+This is a backend API system for expense and income tracking (wallet management). Users can register, authenticate, manage their balance, create expense records organized by categories, and track their financial transactions. The system ensures data integrity through database transactions and provides secure authentication using JWT tokens.
+
+## Features
+
+- **User Authentication**: Secure registration and login with JWT token-based authentication
+- **Balance Management**: Users have a balance that can be topped up through income transactions
+- **Expense Tracking**: Create expense records with automatic balance deduction
+- **Category Organization**: Organize expenses by custom categories
+- **Transaction Safety**: Database transactions ensure atomicity of balance operations
+- **Balance Protection**: Prevents negative balances through validation
+- **Data Validation**: Comprehensive input validation using DTOs and class-validator
+- **Error Handling**: Standardized error responses with appropriate HTTP status codes
 
 ## Tech Stack
 
-- **Nest.js**
-- **Node.js**
-- **TypeScript**
-- **Prisma ORM**
-- **PostgreSQL**
-- **Docker**
-- **Docker Compose**
-- **GitHub Actions**
-- **Render.com**
+- **NestJS** - Progressive Node.js framework
+- **TypeScript** - Type-safe JavaScript
+- **Prisma ORM** - Modern database toolkit
+- **PostgreSQL** - Relational database
+- **JWT** - JSON Web Tokens for authentication
 
----
+## Architecture
 
-## Variant (33 mod 3 = 0)
+The application follows a modular architecture with separate modules for:
 
-**Варіант 0**: Реалізація системи обліку доходів та витрат (гаманець)
-
-### Особливості реалізації:
-- Користувачі мають баланс (поле `balance` в моделі `User`)
-- Можливість поповнення балансу через ендпоінт `/income`
-- При створенні витрати (`Record`) автоматично віднімається сума з балансу користувача
-- Заборона створення витрати, якщо баланс стає від'ємним
-- Використання транзакцій Prisma для забезпечення атомарності операцій
-
----
-
-## Completed Tasks
-
-- Implemented **Users** module with full CRUD operations using Prisma ORM
-- Implemented **Categories** module with create, read, and delete operations
-- Implemented **Records** module with CRUD operations and filtering capabilities
-- Implemented **Income** module for balance top-up functionality
-- Added relationships between records, users, and categories using Prisma
-- Implemented proper error handling with HTTP status codes and global exception filter
-- Added data validation using DTOs (Data Transfer Objects) with class-validator
-- Configured PostgreSQL database with Prisma migrations
-- Implemented balance management system (wallet functionality)
-- Added validation to prevent negative balance
-
----
+- **Auth Module**: Handles user registration, login, and JWT token management
+- **Users Module**: User management and profile operations
+- **Categories Module**: Expense category management
+- **Records Module**: Expense record creation and retrieval
+- **Income Module**: Balance top-up functionality
 
 ## API Endpoints
 
+### Authentication
+
+| Method | Path | Description | Authentication |
+|--------|------|-------------|----------------|
+| POST | `/auth/register` | Register a new user | Public |
+| POST | `/auth/login` | Authenticate and receive JWT token | Public |
+
 ### Health Check
 
-| Method | Path          | Description | Example Response |
-|--------|----------------|--------------|------------------|
-| GET    | `/healthcheck` | Checks the service health. Returns status `200 OK` and JSON with the current timestamp and `"ok"` status | `{"status": "ok", "date": "2025-10-14T09:36:44.231Z"}` |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/healthcheck` | Service health status |
 
 ### Users
 
-| Method | Path          | Description | Request Body | Example Response |
-|--------|---------------|-------------|--------------|-------------------|
-| POST   | `/user`       | Creates a new user | `{"username": "johndoe"}` | `{"id": "uuid", "username": "johndoe", "balance": "0", "created_at": "2025-12-19T..."}` |
-| GET    | `/users`      | Retrieves all users | - | `[{"id": "uuid", "username": "johndoe", "balance": "100.50", "created_at": "2025-12-19T..."}, ...]` |
-| GET    | `/user/:id`   | Retrieves a user by ID | - | `{"id": "uuid", "username": "johndoe", "balance": "100.50", "created_at": "2025-12-19T..."}` |
-| DELETE | `/user/:id`   | Deletes a user by ID | - | `{"message": "User deleted successfully"}` |
+| Method | Path | Description | Authentication |
+|--------|------|-------------|----------------|
+| POST | `/user` | Create a new user (legacy endpoint) | Public |
+| GET | `/users` | Retrieve all users | Required |
+| GET | `/user/me` | Get current authenticated user | Required |
+| GET | `/user/:id` | Get user by ID | Required |
+| DELETE | `/user/:id` | Delete user (own account only) | Required |
 
 ### Categories
 
-| Method | Path            | Description | Request Body | Example Response |
-|--------|-----------------|-------------|--------------|-------------------|
-| POST   | `/category`     | Creates a new category | `{"name": "Food"}` | `{"id": "uuid", "name": "Food"}` |
-| GET    | `/category`     | Retrieves all categories | - | `[{"id": "uuid", "name": "Food"}, ...]` |
-| DELETE | `/category/:id` | Deletes a category by ID | - | `{"message": "Category deleted successfully"}` |
+| Method | Path | Description | Authentication |
+|--------|------|-------------|----------------|
+| POST | `/category` | Create a new category | Required |
+| GET | `/category` | Retrieve all categories | Required |
+| DELETE | `/category/:id` | Delete a category | Required |
 
 ### Records (Expenses)
 
-| Method | Path                    | Description | Request Body | Query Parameters | Example Response |
-|--------|-------------------------|-------------|--------------|------------------|-------------------|
-| POST   | `/record`               | Creates a new expense record. Automatically deducts amount from user balance | `{"user_id": "uuid", "category_id": "uuid", "sum": 100.50}` | - | `{"id": "uuid", "user_id": "uuid", "category_id": "uuid", "sum": "100.50", "created_at": "2025-12-19T..."}` |
-| GET    | `/record`               | Retrieves records with optional filtering | - | `?user_id=uuid&category_id=uuid` (at least one required) | `[{"id": "uuid", "user_id": "uuid", "category_id": "uuid", "sum": "100.50", "created_at": "2025-12-19T..."}, ...]` |
-| GET    | `/record/:id`           | Retrieves a record by ID | - | - | `{"id": "uuid", "user_id": "uuid", "category_id": "uuid", "sum": "100.50", "created_at": "2025-12-19T..."}` |
-| DELETE | `/record/:id`           | Deletes a record by ID | - | - | `{"message": "Record deleted successfully"}` |
+| Method | Path | Description | Authentication |
+|--------|------|-------------|----------------|
+| POST | `/record` | Create an expense record (auto-deducts from balance) | Required |
+| GET | `/record` | Get records (filters by authenticated user or query params) | Required |
+| GET | `/record/:id` | Get record by ID | Required |
+| DELETE | `/record/:id` | Delete a record | Required |
 
 ### Income (Balance Top-up)
 
-| Method | Path                    | Description | Request Body | Example Response |
-|--------|-------------------------|-------------|--------------|------------------|
-| POST   | `/income`               | Adds income to user balance | `{"user_id": "uuid", "amount": 500.00}` | `{"id": "uuid", "username": "johndoe", "balance": "500.00", "created_at": "2025-12-19T..."}` |
+| Method | Path | Description | Authentication |
+|--------|------|-------------|----------------|
+| POST | `/income` | Add income to user balance | Required |
 
----
+## Authentication
 
-## Local Setup Instructions
+Most endpoints require JWT authentication. Include the token in the Authorization header:
 
-To run this project locally, make sure you have **Git**, **Node.js**, **npm**, **Docker**, and **Docker Compose** installed.
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/saveniukk/backend.git
+```
+Authorization: Bearer <your-jwt-token>
 ```
 
-### 2. Navigate to the project directory
-```bash
-cd backend
-```
+Tokens are obtained through `/auth/register` or `/auth/login` endpoints and are valid for 24 hours.
 
-### 3. Install dependencies
-```bash
-npm install
-```
+## Data Models
 
-### 4. Create an environment variables file
-Create a `.env` file in the project root with the following content:
+### User
+- `id` (UUID): Unique identifier
+- `username` (String): Unique username
+- `email` (String): Unique email address
+- `password` (String): Hashed password
+- `balance` (Decimal): Current balance
+- `created_at` (DateTime): Account creation timestamp
 
-```bash
-# Application Port
-PORT=3000
+### Category
+- `id` (UUID): Unique identifier
+- `name` (String): Category name
 
-# PostgreSQL Database Configuration
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=backend_db
-POSTGRES_PORT=5432
-POSTGRES_HOST=db
+### Record
+- `id` (UUID): Unique identifier
+- `user_id` (UUID): Reference to user
+- `category_id` (UUID): Reference to category
+- `sum` (Decimal): Expense amount
+- `created_at` (DateTime): Record creation timestamp
 
-# Database URL for Prisma
-# For local development (when running migrations from host machine)
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/backend_db?schema=public"
-```
+## Key Features Implementation
 
-### 5. Start PostgreSQL database
-```bash
-docker compose up -d db
-```
+### Balance Management
+- Users start with a balance of 0
+- Income transactions increase the balance
+- Expense records automatically deduct from balance
+- System prevents negative balances
 
-Wait for the database to be ready (healthcheck will verify this).
+### Transaction Safety
+- Expense creation uses database transactions to ensure atomicity
+- Balance updates and record creation happen in a single transaction
+- Prevents race conditions and data inconsistencies
 
-### 6. Run Prisma migrations
-```bash
-npx prisma migrate deploy
-```
+### Security
+- Passwords are hashed using bcrypt with salt rounds of 10
+- JWT tokens contain user information (id, email, username)
+- Protected endpoints require valid JWT tokens
+- Users can only delete their own accounts
 
-Or if you want to create a new migration:
-```bash
-npx prisma migrate dev
-```
-
-### 7. Generate Prisma Client
-```bash
-npx prisma generate
-```
-
-### 8. Run the application
-
-**Option A: Using Docker Compose (recommended)**
-```bash
-docker compose up --build
-```
-
-**Option B: Using npm (for development)**
-```bash
-npm run start:dev
-```
-
-After execution, your app will be available at [http://localhost:3000](http://localhost:3000)
-
-### 9. Verify it's working
-Open [http://localhost:3000/healthcheck](http://localhost:3000/healthcheck) in your browser or API client.  
-You should see a JSON response like this:
-
-```json
-{
-  "status": "ok",
-  "date": "2025-12-19T14:46:13.231Z"
-}
-```
-
-### 10. Stop the containers
-To stop the application, press `Ctrl + C` in the terminal where Docker Compose is running, or execute:
-
-```bash
-docker compose down
-```
-
-To stop only the database:
-```bash
-docker compose stop db
-```
-
----
-
-## Deployment
-
-The project is automatically deployed to **Render.com** whenever a new commit is pushed to the `main` branch
-
-**Deployed project link:**  
-[https://backend-0pnu.onrender.com/healthcheck](https://backend-0pnu.onrender.com/healthcheck)
-
----
-
-## Error Handling
-
-API використовує глобальний exception filter, який повертає стандартизовані помилки у форматі:
+### Error Handling
+The API returns standardized error responses:
 
 ```json
 {
@@ -212,10 +146,99 @@ API використовує глобальний exception filter, який п�
 }
 ```
 
-### Типи помилок:
+### Error Types
+- **400 Bad Request**: Validation errors or insufficient balance
+- **401 Unauthorized**: Invalid or missing authentication token
+- **403 Forbidden**: Insufficient permissions
+- **404 Not Found**: Resource not found
+- **409 Conflict**: Duplicate resource (e.g., existing email/username)
+- **500 Internal Server Error**: Server-side errors
 
-- **400 Bad Request** - помилки валідації або недостатній баланс
-- **404 Not Found** - ресурс не знайдено
-- **500 Internal Server Error** - внутрішні помилки сервера
+## Request/Response Examples
 
----
+### Register User
+**Request:**
+```json
+POST /auth/register
+{
+  "username": "johndoe",
+  "email": "john@example.com",
+  "password": "securepassword123"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "username": "johndoe",
+  "email": "john@example.com",
+  "balance": "0",
+  "created_at": "2025-12-19T14:46:13.231Z",
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### Create Expense Record
+**Request:**
+```json
+POST /record
+Authorization: Bearer <token>
+{
+  "category_id": "category-uuid",
+  "sum": 150.50
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "user_id": "user-uuid",
+  "category_id": "category-uuid",
+  "sum": "150.50",
+  "created_at": "2025-12-19T14:46:13.231Z"
+}
+```
+
+## Database Schema
+
+The application uses PostgreSQL with the following relationships:
+
+- **User** has many **Records**
+- **Category** has many **Records**
+- **Record** belongs to one **User** and one **Category**
+
+Foreign key constraints ensure referential integrity, and cascade deletion is configured for related records.
+
+## Validation Rules
+
+### User Registration
+- Username: 3-50 characters, unique
+- Email: Valid email format, unique
+- Password: Minimum 6 characters
+
+### Expense Records
+- Category ID: Valid UUID, must exist
+- Sum: Positive number
+- Balance: Must be sufficient (checked before creation)
+
+### Income
+- Amount: Positive number
+
+## Project Structure
+
+```
+src/
+├── auth/              # Authentication module
+│   ├── dto/          # Data transfer objects
+│   ├── decorators/   # Custom decorators (CurrentUser)
+│   ├── guards/       # JWT authentication guard
+│   └── strategies/   # JWT strategy
+├── users/            # User management module
+├── categories/       # Category management module
+├── records/          # Expense records module
+├── income/           # Income/balance module
+├── prisma/           # Prisma service
+└── common/           # Shared utilities and filters
+```

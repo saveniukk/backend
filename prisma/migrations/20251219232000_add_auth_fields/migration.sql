@@ -16,3 +16,4 @@ WHERE "email" IS NULL OR "password" IS NULL;
 ALTER TABLE "users" ALTER COLUMN "email" SET NOT NULL;
 ALTER TABLE "users" ALTER COLUMN "password" SET NOT NULL;
 
+
