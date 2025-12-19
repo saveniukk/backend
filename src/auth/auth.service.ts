@@ -19,7 +19,6 @@ export class AuthService {
   async register(registerDto: RegisterDto) {
     const { username, email, password } = registerDto;
 
-    // Check if user with email already exists
     const existingUserByEmail = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -27,7 +26,6 @@ export class AuthService {
       throw new ConflictException('User with this email already exists');
     }
 
-    // Check if user with username already exists
     const existingUserByUsername = await this.prisma.user.findUnique({
       where: { username },
     });
@@ -35,10 +33,8 @@ export class AuthService {
       throw new ConflictException('User with this username already exists');
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
     const user = await this.prisma.user.create({
       data: {
         username,
@@ -47,11 +43,9 @@ export class AuthService {
       },
     });
 
-    // Generate JWT token
     const payload = { sub: user.id, email: user.email, username: user.username };
     const access_token = this.jwtService.sign(payload);
 
-    // Return user without password
     const { password: _, ...userWithoutPassword } = user;
 
     return {
@@ -63,7 +57,6 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
-    // Find user by email
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -72,18 +65,15 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Generate JWT token
     const payload = { sub: user.id, email: user.email, username: user.username };
     const access_token = this.jwtService.sign(payload);
 
-    // Return user without password
     const { password: _, ...userWithoutPassword } = user;
 
     return {

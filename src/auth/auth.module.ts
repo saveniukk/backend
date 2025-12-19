@@ -6,12 +6,14 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { PrismaModule } from '../prisma/prisma.module';
 
+const jwtSecret = process.env.JWT_SECRET;
+
 @Module({
   imports: [
     PrismaModule,
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      secret: jwtSecret || 'your-secret-key-change-in-production',
       signOptions: { expiresIn: '24h' },
     }),
   ],
@@ -20,4 +22,3 @@ import { PrismaModule } from '../prisma/prisma.module';
   exports: [AuthService],
 })
 export class AuthModule {}
-
