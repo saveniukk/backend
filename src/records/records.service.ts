@@ -30,12 +30,38 @@ export class RecordsService {
       );
     }
 
-    return this.prisma.record.create({
-      data: {
-        user_id: createRecordDto.user_id,
-        category_id: createRecordDto.category_id,
-        sum: createRecordDto.sum,
-      },
+    // Check if balance will become negative
+    const currentBalance = Number(user.balance);
+    const expenseAmount = Number(createRecordDto.sum);
+    const newBalance = currentBalance - expenseAmount;
+
+    if (newBalance < 0) {
+      throw new BadRequestException(
+        `Insufficient balance. Current balance: ${currentBalance}, Required: ${expenseAmount}`,
+      );
+    }
+
+    // Use transaction to ensure atomicity
+    return this.prisma.$transaction(async (tx) => {
+      // Create the record
+      const record = await tx.record.create({
+        data: {
+          user_id: createRecordDto.user_id,
+          category_id: createRecordDto.category_id,
+          sum: createRecordDto.sum,
+        },
+      });
+
+      // Update user balance
+      const updatedBalance = currentBalance - expenseAmount;
+      await tx.user.update({
+        where: { id: createRecordDto.user_id },
+        data: {
+          balance: updatedBalance,
+        },
+      });
+
+      return record;
     });
   }
 
