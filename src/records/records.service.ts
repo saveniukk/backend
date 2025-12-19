@@ -3,67 +3,84 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
-import { Record } from './records.model';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateRecordDto } from './dto/create-record.dto';
-import { UsersService } from '../users/users.service';
-import { CategoriesService } from '../categories/categories.service';
+import { Record, Prisma } from '@prisma/client';
 
 @Injectable()
 export class RecordsService {
-  private records: Map<string, Record> = new Map();
+  constructor(private readonly prisma: PrismaService) {}
 
-  constructor(
-    private readonly usersService: UsersService,
-    private readonly categoriesService: CategoriesService,
-  ) {}
+  async create(createRecordDto: CreateRecordDto): Promise<Record> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: createRecordDto.user_id },
+    });
+    if (!user) {
+      throw new NotFoundException(
+        `User with ID ${createRecordDto.user_id} not found`,
+      );
+    }
 
-  create(createRecordDto: CreateRecordDto): Record {
-    this.usersService.findOne(createRecordDto.user_id);
-    this.categoriesService.findOne(createRecordDto.category_id);
+    const category = await this.prisma.category.findUnique({
+      where: { id: createRecordDto.category_id },
+    });
+    if (!category) {
+      throw new NotFoundException(
+        `Category with ID ${createRecordDto.category_id} not found`,
+      );
+    }
 
-    const id = uuidv4();
-    const record: Record = {
-      id,
-      userId: createRecordDto.user_id,
-      categoryId: createRecordDto.category_id,
-      amount: createRecordDto.sum,
-      timestamp: new Date().toISOString(),
-    };
-
-    this.records.set(id, record);
-    return record;
+    return this.prisma.record.create({
+      data: {
+        user_id: createRecordDto.user_id,
+        category_id: createRecordDto.category_id,
+        sum: createRecordDto.sum,
+      },
+    });
   }
 
-  findOne(id: string): Record {
-    const record = this.records.get(id);
+  async findOne(id: string): Promise<Record> {
+    const record = await this.prisma.record.findUnique({
+      where: { id },
+    });
+
     if (!record) {
       throw new NotFoundException(`Record with ID ${id} not found`);
     }
+
     return record;
   }
 
-  findAll(userId?: string, categoryId?: string): Record[] {
+  async findAll(userId?: string, categoryId?: string): Promise<Record[]> {
     if (!userId && !categoryId) {
       throw new BadRequestException(
         'At least one filter parameter (user_id or category_id) is required',
       );
     }
 
-    const allRecords = Array.from(this.records.values());
+    const where: Prisma.RecordWhereInput = {};
+    if (userId) {
+      where.user_id = userId;
+    }
+    if (categoryId) {
+      where.category_id = categoryId;
+    }
 
-    return allRecords.filter((record) => {
-      let matches = true;
-      if (userId && record.userId !== userId) matches = false;
-      if (categoryId && record.categoryId !== categoryId) matches = false;
-      return matches;
+    return this.prisma.record.findMany({
+      where,
+      orderBy: {
+        created_at: 'desc',
+      },
     });
   }
 
-  remove(id: string): void {
-    if (!this.records.has(id)) {
+  async remove(id: string): Promise<void> {
+    try {
+      await this.prisma.record.delete({
+        where: { id },
+      });
+    } catch (error) {
       throw new NotFoundException(`Record with ID ${id} not found`);
     }
-    this.records.delete(id);
   }
 }
